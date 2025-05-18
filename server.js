@@ -1,31 +1,33 @@
 require("dotenv").config();
-console.log("🔍 JWT_SECRET cargado:", process.env.JWT_SECRET);
 const express = require("express");
 const cors = require("cors");
 const connectDB = require("./config/db");
 
+const authRoutes = require("./routes/authRoutes");
+const productRoutes = require("./routes/productRoutes");
+const paymentRoutes = require("./routes/paymentRoutes");
+
 const app = express();
 
-// Log para verificar la inicialización del servidor
 console.log("🚀 Servidor iniciando...");
 
 // Middleware
-app.use(express.json());
+app.use(express.json()); // Asegura que el backend procese JSON correctamente
 app.use(cors());
 
 // Conectar a MongoDB
 connectDB();
 
-// Verificar si `.env` está cargando correctamente
-console.log("🔍 Variable MONGO_URI:", process.env.MONGO_URI);
+// Verificar que `.env` se carga correctamente
+console.log("🔍 JWT_SECRET:", process.env.JWT_SECRET);
+console.log("🔍 STRIPE_SECRET_KEY:", process.env.STRIPE_SECRET_KEY);
 
-// Puerto del servidor
+// Cargar rutas
+console.log("🔍 Cargando rutas...");
+app.use("/api/auth", authRoutes);
+app.use("/api/products", productRoutes);
+app.use("/api/payment", paymentRoutes);
+console.log("✅ Rutas cargadas correctamente.");
+
 const PORT = process.env.PORT || 5000;
 app.listen(PORT, () => console.log(`🚀 Servidor corriendo en el puerto ${PORT}`));
-const authRoutes = require("./routes/authRoutes");
-
-app.use("/api/auth", authRoutes);
-
-const productRoutes = require("./routes/productRoutes");
-
-app.use("/api/products", productRoutes);
