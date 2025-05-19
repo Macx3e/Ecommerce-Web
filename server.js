@@ -1,36 +1,41 @@
 require("dotenv").config();
 const express = require("express");
 const cors = require("cors");
+const helmet = require("helmet");
+const rateLimit = require("express-rate-limit");
 const connectDB = require("./config/db");
+const redis = require("redis");
 
 const authRoutes = require("./routes/authRoutes");
 const productRoutes = require("./routes/productRoutes");
-const paymentRoutes = require("./routes/paymentRoutes");
+const orderRoutes = require("./routes/orderRoutes");
 
 const app = express();
 
 console.log("🚀 Servidor iniciando...");
 
-// Middleware
-app.use(express.json()); // Asegura que el backend procese JSON correctamente
+app.use(helmet());
+console.log("✅ Seguridad activada con Helmet");
+
+const limiter = rateLimit({
+  windowMs: 15 * 60 * 1000,
+  max: 100,
+});
+app.use(limiter);
+console.log("✅ Rate limiting activado");
+
+app.use(express.json());
 app.use(cors());
 
-// Conectar a MongoDB
 connectDB();
 
-// Verificar que `.env` se carga correctamente
-console.log("🔍 JWT_SECRET:", process.env.JWT_SECRET);
-console.log("🔍 STRIPE_SECRET_KEY:", process.env.STRIPE_SECRET_KEY);
+const redisClient = redis.createClient();
+redisClient.on("error", (err) => console.error("❌ Error en Redis:", err));
+console.log("✅ Redis conectado correctamente");
 
-// Cargar rutas
-console.log("🔍 Cargando rutas...");
 app.use("/api/auth", authRoutes);
 app.use("/api/products", productRoutes);
-app.use("/api/payment", paymentRoutes);
-console.log("✅ Rutas cargadas correctamente.");
+app.use("/api/orders", orderRoutes);
 
 const PORT = process.env.PORT || 5000;
 app.listen(PORT, () => console.log(`🚀 Servidor corriendo en el puerto ${PORT}`));
-const orderRoutes = require("./routes/orderRoutes");
-
-app.use("/api/orders", orderRoutes);
